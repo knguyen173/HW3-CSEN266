@@ -131,13 +131,46 @@ def iterativeDeepeningSearch(problem):
     """
     Perform DFS with increasingly larger depth. Begin with a depth of 1 and increment depth by 1 at every step.
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    def depthLimitedSearch(state, actions, depth, explored):
+        if problem.isGoalState(state):
+            return actions
+        if depth == 0:
+            return None
+        explored.add(state)
+        for successor, action, stepCost in problem.getSuccessors(state):
+            if successor not in explored:
+                result = depthLimitedSearch(successor, actions + [action], depth - 1, explored)
+                if result is not None:
+                    return result
+        explored.remove(state)
+        return None
+
+    depth = 1
+    while True:
+        result = depthLimitedSearch(problem.getStartState(), [], depth, set())
+        if result is not None:
+            return result
+        depth += 1
 
 def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.PriorityQueue()
+    # PriorityQueue stores (state, actions, cost) with priority = cost
+    frontier.push((problem.getStartState(), [], 0), 0)
+    explored = set()
+
+    while not frontier.isEmpty():
+        state, actions, cost = frontier.pop()
+
+        if problem.isGoalState(state):
+            return actions
+
+        if state not in explored:
+            explored.add(state)
+            for successor, action, stepCost in problem.getSuccessors(state):
+                if successor not in explored:
+                    frontier.push((successor, actions + [action], cost + stepCost), cost + stepCost)
+    return []
 
 def nullHeuristic(state, problem=None) -> float:
     """
@@ -148,8 +181,27 @@ def nullHeuristic(state, problem=None) -> float:
 
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Directions]:
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.PriorityQueue()
+    # PriorityQueue stores (state, actions, g) with priority = f = g + h
+    frontier.push((problem.getStartState(), [], 0), heuristic(problem.getStartState(), problem))
+    best_g = {}
+
+    while not frontier.isEmpty():
+        state, actions, g = frontier.pop()
+
+        if state in best_g and g >= best_g[state]:
+            continue
+
+        best_g[state] = g
+
+        if problem.isGoalState(state):
+            return actions
+
+        for successor, action, stepCost in problem.getSuccessors(state):
+            new_g = g + stepCost
+            f = new_g + heuristic(successor, problem)
+            frontier.push((successor, actions + [action], new_g), f)
+    return []
 
 # Abbreviations
 bfs = breadthFirstSearch
